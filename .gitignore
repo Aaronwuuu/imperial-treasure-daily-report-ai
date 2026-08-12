@@ -1,0 +1,15 @@
+backend/.env
+backend/access.env
+backend/restaurant.db
+backend/*.db
+backend/*.sqlite*
+backend/venv/
+.venv/
+frontend/dist/
+frontend/node_modules/
+**/__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.*
+!.env.example
