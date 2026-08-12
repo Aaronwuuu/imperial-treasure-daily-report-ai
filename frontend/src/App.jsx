@@ -1,179 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-const API = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000`;
-const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-const weekdayEnglish = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const EN = {
-  "请输入店长、领班或员工访问码": "Enter your manager, shift lead, or employee access code",
-  "访问码": "Access code", "正在登录…": "Signing in…", "进入系统": "Sign in",
-  "把今天的现场情况，清楚地交接给明天。": "Turn today's operations into a clear handoff for tomorrow.",
-  "店长": "Manager", "领班": "Shift Lead", "员工": "Employee", "退出": "Sign out",
-  "工作日期": "Work date", "选择日期": "Select date", "员工班表": "Schedule",
-  "领班报告": "Shift Report", "前厅补货": "Restock", "AI 报告": "AI Reports",
-  "正在读取当天记录…": "Loading daily records…", "本周班表": "Weekly Schedule",
-  "选择排班周": "Select schedule week", "上一周": "Previous", "本周": "This week", "下一周": "Next",
-  "点击格子中的下拉菜单安排员工，空白表示该班次无人。": "Use each cell menu to assign staff. Leave it blank when no one is scheduled.",
-  "左右滑动可以查看完整的一周班表。": "Swipe sideways to view the full weekly schedule.",
-  "班表": "Schedule", "日期": "Date", "午休": "Break", "检查加班风险": "Check overtime",
-  "AI 分析中…": "AI analyzing…", "保存整周班表": "Save full week",
-  "加班风险分析": "Overtime Risk", "工时正常": "Hours OK", "排班调整建议": "Schedule Suggestions",
-  "AI 调整建议": "AI Schedule Suggestions", "员工名册管理": "Employee Directory",
-  "输入新员工姓名": "Enter new employee name", "添加员工": "Add employee", "移除": "Remove",
-  "值班信息": "Shift Information", "星期": "Weekday", "今日领班": "Shift lead",
-  "填写领班姓名": "Enter shift lead name", "出品与服务": "Food & Service", "现场反馈": "Operations Feedback",
-  "烤鸭反馈": "Roast Duck Feedback", "后厨菜品反馈": "Kitchen Feedback", "前台出菜情况": "Service Timing",
-  "员工情况": "Employee Notes", "选填": "Optional", "来自当天班表": "From schedule",
-  "评价选填，可直接留空": "Optional comment — leave blank if not needed", "员工上班情况": "Attendance",
-  "其他事项": "Other Items", "交接提醒": "Handoff Notes", "特殊事宜": "Special Items",
-  "节假日事宜": "Holiday Items", "保存草稿": "Save Draft", "提交今日总结": "Submit Daily Report",
-  "补货清单": "Restock Checklist", "包装耗材": "Packaging Supplies", "饮品": "Beverages",
-  "饮料": "Drinks", "啤酒": "Beer", "新增饮品种类": "Add Beverage Type", "永久保存": "Saved Permanently",
-  "添加": "Add", "补货备注": "Restock Notes", "当前状态": "Status", "待确认": "Pending",
-  "已提交": "Submitted", "已完成": "Completed", "保存清单": "Save Checklist", "提交补货单": "Submit Restock",
-  "智能运营报告": "AI Operations Report", "AI 已连接": "AI Connected", "等待配置": "Setup Required",
-  "周度报告": "Weekly Report", "月度报告": "Monthly Report", "报告范围": "Report Range",
-  "有日报天数": "Days Logged", "已提交日报": "Reports Submitted", "员工记录": "Employee Notes",
-  "补货记录天数": "Restock Days", "周度总结": "Weekly Summary", "月度总结": "Monthly Summary",
-  "已保存": "Saved", "返回日报": "Back to Daily Report", "重新生成报告": "Regenerate Report",
-  "生成 AI 报告": "Generate AI Report", "AI 正在分析…": "AI analyzing…", "草稿": "Draft",
-  "黑盒": "Black Containers", "牛皮纸盒": "Kraft Boxes", "汤桶": "Soup Containers",
-  "外卖袋子": "Takeout Bags", "餐巾纸及清洁用品": "Napkins & Cleaning Supplies",
-  "12oz小黑盒": "12 oz Small Black Container", "锡纸盘的盖子": "Foil Tray Lid",
-  "外卖大锡纸盘": "Large Takeout Foil Tray", "打米饭的小白盒": "Small White Rice Container",
-  "32oz盒子": "32 oz Container", "大号牛皮纸盒": "Large Kraft Box", "小号牛皮纸盒": "Small Kraft Box",
-  "64oz胖汤桶": "64 oz Wide Soup Container", "32oz高汤桶": "32 oz Tall Soup Container",
-  "16oz矮汤桶": "16 oz Short Soup Container", "8oz扁汤桶": "8 oz Flat Soup Container",
-  "大号外卖袋": "Large Takeout Bag", "中号外卖袋": "Medium Takeout Bag", "小号外卖袋": "Small Takeout Bag",
-  "餐巾纸": "Napkins", "厕纸": "Toilet Paper", "马桶坐垫": "Toilet Seat Covers",
-  "擦手纸": "Paper Towels", "绿色包装": "Green Package", "红色包装": "Red Package",
-  "早班": "Morning Shift", "晚班": "Evening Shift", "已停用": "Inactive",
-  "人超时": " over limit", "名员工": " employees", "本周预警线：每人": "Weekly warning threshold per employee:",
-  "小时。该提示用于排班辅助，最终请以当地劳动法规和实际打卡为准。": "hours. Use this as scheduling guidance; local labor rules and actual clock-ins take precedence.",
-  "新员工添加一次后，就会出现在班表每个格子的下拉菜单中。移除员工不会删除以前的班表和报告。": "Add a new employee once and they will appear in every schedule menu. Removing an employee will not delete past schedules or reports.",
-  "口感、出品质量、客人反馈…": "Taste, food quality, guest feedback…", "菜品质量、缺货、退菜情况…": "Food quality, shortages, returned dishes…",
-  "出菜速度、漏单、催菜情况…": "Service speed, missed orders, delayed dishes…", "迟到、请假、换班、人员安排…": "Late arrivals, leave, shift swaps, staffing…",
-  "设备、客诉、预订或其他需要关注的事项…": "Equipment, complaints, reservations, or other concerns…",
-  "节假日备货、排班、活动安排…": "Holiday inventory, staffing, and promotions…",
-  "当天班表暂无员工。请先由店长完成排班。": "No employees are scheduled today. Ask the manager to complete the schedule first.",
-  "展开分类，勾选需要补货的物品即可，不再填写数量。": "Open each category and check the items that need restocking. No quantities are required.",
-  "手机上新增后所有人都能看到；停卖的饮品可点清单右侧 × 删除。": "New beverages added on a phone are visible to everyone. Remove discontinued items with the × button.",
-  "供应商、到货时间或其他要求…": "Supplier, delivery time, or other requests…", "例如：雪碧": "Example: Sprite",
-  "系统会自动汇总每日总结、员工表现和补货记录，再生成管理层可直接阅读的报告。": "Daily reports, employee performance, and restock records are combined into a management-ready summary.",
-  "还差一步即可使用 AI": "One more step to enable AI", "尚未生成这段时间的报告": "No report has been generated for this period",
-  "已有运营数据，可以开始生成。": "Operations data is ready to analyze.", "请先填写并保存这段时间内的每日记录。": "Please complete and save daily records for this period first.",
-};
-const tr = (language, text) => language === "en" ? (EN[text] || text) : text;
-const supplyGroups = [
-  { title: "黑盒", items: ["12oz小黑盒", "锡纸盘的盖子", "外卖大锡纸盘", "打米饭的小白盒", "32oz盒子"] },
-  { title: "牛皮纸盒", items: ["大号牛皮纸盒", "小号牛皮纸盒"] },
-  { title: "汤桶", items: ["64oz胖汤桶", "32oz高汤桶", "16oz矮汤桶", "8oz扁汤桶"] },
-  { title: "外卖袋子", items: ["大号外卖袋", "中号外卖袋", "小号外卖袋"] },
-  { title: "餐巾纸及清洁用品", items: ["餐巾纸", "厕纸", "马桶坐垫", "擦手纸", "绿色包装", "红色包装"] },
-];
-const scheduleSlots = [
-  { key: "am_pink", time: "10:30am – 2:30pm", color: "pink", position: "早班" },
-  { key: "am_blue_1", time: "10:45am – 2:15pm", color: "blue", position: "早班" },
-  { key: "am_red", time: "10:45am – 2:15pm", color: "red", position: "早班" },
-  { key: "am_blue_2", time: "11:00am – 2:30pm", color: "blue", position: "早班" },
-  { key: "am_orange", time: "11:00am – 2:30pm", color: "orange", position: "早班" },
-  { key: "am_blue_3", time: "11:30am – 3:00pm", color: "blue", position: "早班" },
-  { key: "am_yellow", time: "11:30am – 3:00pm", color: "yellow", position: "早班" },
-  { key: "break", break: true, label: "午休" },
-  { key: "pm_pink", time: "4:30pm – 8:30pm", color: "pink", position: "晚班" },
-  { key: "pm_red", time: "4:45pm – 9:30pm", color: "red", position: "晚班" },
-  { key: "pm_blue_1", time: "5:00pm – 9:30pm", color: "blue", position: "晚班" },
-  { key: "pm_orange", time: "5:00pm – 9:30pm", color: "orange", position: "晚班" },
-  { key: "pm_blue_2", time: "5:00pm – 9:30pm", color: "blue", position: "晚班" },
-  { key: "pm_blue_3", time: "5:30pm – 9:30pm", color: "blue", position: "晚班" },
-  { key: "pm_yellow", time: "5:30pm – 9:30pm", color: "yellow", position: "晚班" },
-];
-const emptyReport = (recordDate) => ({
-  record_date: recordDate, weekday: weekdays[new Date(`${recordDate}T12:00:00`).getDay()], supervisor: "",
-  roast_duck_feedback: "", kitchen_feedback: "", serving_status: "", employee_issues: [],
-  attendance: "", special_notes: "", holiday_notes: "", status: "草稿",
-});
-const emptyOrder = (recordDate) => ({
-  record_date: recordDate, supplies: {}, drinks: {}, beers: {}, notes: "", status: "待确认",
-});
-
-function dateToWeekValue(dateText) {
-  const value = new Date(`${dateText}T12:00:00`);
-  const utc = new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()));
-  const day = utc.getUTCDay() || 7;
-  utc.setUTCDate(utc.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
-  return `${utc.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
-}
-
-function weekValueToMonday(weekValue) {
-  const [yearText, weekText] = weekValue.split("-W");
-  const year = Number(yearText); const week = Number(weekText);
-  const januaryFourth = new Date(`${year}-01-04T12:00:00`);
-  const monday = new Date(januaryFourth);
-  monday.setDate(januaryFourth.getDate() - ((januaryFourth.getDay() + 6) % 7) + (week - 1) * 7);
-  return monday.toLocaleDateString("en-CA");
-}
-
-async function request(path, options) {
-  const accessCode = window.localStorage.getItem("restaurant_access_code") || "";
-  const response = await fetch(`${API}${path}`, {
-    headers: { "Content-Type": "application/json", "X-Access-Code": accessCode }, ...options,
-  });
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.detail || "操作失败，请稍后重试");
-  }
-  return response.json();
-}
-
-function Field({ label, hint, children }) {
-  return <label className="field"><span>{label}</span>{hint && <small>{hint}</small>}{children}</label>;
-}
-
-function ChecklistDrawer({ title, tone, items, values, onChange, onDelete, defaultOpen = false, language }) {
-  const selectedCount = items.filter((item) => values[typeof item === "string" ? item : item.name]).length;
-  return (
-    <details className={`check-drawer ${tone}`} open={defaultOpen || undefined}>
-      <summary><span>{tr(language, title)}</span><div><em>{language === "en" ? (selectedCount ? `${selectedCount} selected` : `${items.length} items`) : (selectedCount ? `已选 ${selectedCount}` : `${items.length} 项`)}</em><b>⌄</b></div></summary>
-      <div className="check-list">
-        {items.map((item) => {
-          const name = typeof item === "string" ? item : item.name;
-          return <div className={`check-item ${values[name] ? "checked" : ""}`} key={name}>
-            <label><input type="checkbox" checked={Boolean(values[name])} onChange={(e) => onChange(name, e.target.checked)} /><span className="checkmark">✓</span><strong>{tr(language, name)}</strong></label>
-            {onDelete && <button className="delete-item" type="button" aria-label={language === "en" ? `Delete ${name}` : `删除${name}`} onClick={() => onDelete(item)}>×</button>}
-          </div>;
-        })}
-      </div>
-    </details>
-  );
-}
-
-function AIContent({ content }) {
-  if (!content) return null;
-  return <div className="ai-content">{content.split("\n").map((line, index) => {
-    if (line.startsWith("## ")) return <h3 key={index}>{line.slice(3)}</h3>;
-    if (line.startsWith("# ")) return <h2 key={index}>{line.slice(2)}</h2>;
-    if (line.startsWith("- ") || /^\d+\. /.test(line)) return <div className="report-point" key={index}>{line}</div>;
-    return line.trim() ? <p key={index}>{line}</p> : <div className="report-space" key={index} />;
-  })}</div>;
-}
-
-function LoginScreen({ onLogin, language, setLanguage }) {
-  const [code, setCode] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const login = async () => {
-    if (!code.trim()) return;
-    setBusy(true); setError("");
-    window.localStorage.setItem("restaurant_access_code", code.trim());
-    try { const result = await request("/auth/login", { method: "POST" }); onLogin(result.role); }
-    catch (err) { window.localStorage.removeItem("restaurant_access_code"); setError(err.message); }
-    finally { setBusy(false); }
-  };
-  return <div className="login-page"><div className="login-card"><div className="language-toggle"><button className={language === "zh" ? "active" : ""} onClick={() => setLanguage("zh")}>中文</button><button className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")}>English</button></div><div className="hero-mark">宝</div><span className="eyebrow">{language === "en" ? "IMPERIAL TREASURE" : "BAO ZANG"}</span><h1>{language === "en" ? "Imperial Treasure" : "宝藏"}</h1><p>{tr(language, "请输入店长、领班或员工访问码")}</p><input type="password" inputMode="text" value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && login()} placeholder={tr(language, "访问码")} autoFocus />{error && <small>{error}</small>}<button onClick={login} disabled={busy}>{tr(language, busy ? "正在登录…" : "进入系统")}</button></div></div>;
-}
+import { AIContent, ChecklistDrawer, Field, LoginScreen } from "./components/Common";
+import { request } from "./services/api";
+import { emptyOrder, emptyReport, scheduleSlots, supplyGroups, dateToWeekValue, weekValueToMonday } from "./data/operations";
+import { tr, weekdayEnglish, weekdays } from "./i18n/translations";
 
 function App() {
   const today = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
@@ -189,7 +20,6 @@ function App() {
   const [catalog, setCatalog] = useState({ drinks: [], beers: [] });
   const [employeeDirectory, setEmployeeDirectory] = useState([]);
   const [newEmployeeName, setNewEmployeeName] = useState("");
-  const [selectedEmployeeNames, setSelectedEmployeeNames] = useState([]);
   const [aiPeriod, setAiPeriod] = useState("week");
   const [aiReportInfo, setAiReportInfo] = useState(null);
   const [generatingReport, setGeneratingReport] = useState(false);
@@ -199,7 +29,6 @@ function App() {
   const [analyzingOvertime, setAnalyzingOvertime] = useState(false);
   const [newItem, setNewItem] = useState("");
   const [addingType, setAddingType] = useState("drink");
-  const [employee, setEmployee] = useState({ name: "", score: 5, notes: "" });
   const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -280,21 +109,6 @@ function App() {
     ...current, [group]: { ...current[group], [name]: value },
   }));
 
-  const addEmployee = () => {
-    const manualName = employee.name.trim();
-    const names = [...new Set([...selectedEmployeeNames, ...(manualName ? [manualName] : [])])];
-    if (names.length === 0) return flash("请先选择至少一名员工", "error");
-    const score = Number(employee.score);
-    if (employee.score === "" || Number.isNaN(score) || score < 0 || score > 5) {
-      return flash("评分请输入 0 到 5 之间的数字", "error");
-    }
-    const newRecords = names.map((name) => ({ name, score, notes: employee.notes }));
-    updateReport("employee_issues", [...report.employee_issues, ...newRecords]);
-    setEmployee({ name: "", score: 5, notes: "" });
-    setSelectedEmployeeNames([]);
-    flash(`已为 ${names.length} 名员工添加评分`);
-  };
-
   const addEmployeeToDirectory = async () => {
     if (!newEmployeeName.trim()) return flash("请输入员工姓名", "error");
     try {
@@ -302,7 +116,6 @@ function App() {
         method: "POST", body: JSON.stringify({ name: newEmployeeName.trim() }),
       });
       setEmployeeDirectory((current) => [...current, saved]);
-      setSelectedEmployeeNames((current) => [...new Set([...current, saved.name])]);
       setNewEmployeeName("");
       flash(`${saved.name} 已加入员工名册`);
     } catch (error) { flash(error.message, "error"); }
@@ -313,7 +126,6 @@ function App() {
     try {
       await request(`/employees/${directoryEmployee.id}`, { method: "DELETE" });
       setEmployeeDirectory((current) => current.filter((item) => item.id !== directoryEmployee.id));
-      setSelectedEmployeeNames((current) => current.filter((name) => name !== directoryEmployee.name));
       flash(`${directoryEmployee.name} 已移出员工名册`);
     } catch (error) { flash(error.message, "error"); }
   };
